@@ -2,6 +2,12 @@ package controllers
 
 import javax.inject._
 import akka.actor._
+import akka.pattern.ask
+import akka.util.Timeout
+import scala.collection.mutable.ArrayBuffer
+import scala.concurrent.{Await, ExecutionContext, Future}
+import scala.concurrent.duration._
+import scala.language.postfixOps
 import play.api._
 import play.api.mvc._
 import play.api.Play.current
@@ -26,6 +32,10 @@ class Application @Inject()(actorSystem: ActorSystem) extends Controller {
   }
 
   def index = Action {
-    Ok(views.html.index("Hello."))
+    implicit val timeout = Timeout(5 seconds)
+    val futureCurrMessages = chat ? AskCurrMessages
+    val currMessages = Await.result(futureCurrMessages, timeout.duration).asInstanceOf[ArrayBuffer[String]].toArray
+
+    Ok(views.html.index("Hello.", currMessages))
   }
 }

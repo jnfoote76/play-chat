@@ -1,4 +1,4 @@
-@(message: String)
+@(message: String, currMessages: Array[String])
 
 @main("Welcome to Play") {
     <div ng-app="ChatApp">
@@ -13,6 +13,9 @@
             </form>
 
             <ul>
+                @for(currMessage <- currMessages) {
+                  <li>@currMessage</li>
+                }
                 <li ng-repeat="msg in chat.messages track by $index">
                     {{msg}}
                 </li>
