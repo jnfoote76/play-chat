@@ -1,6 +1,8 @@
 package models
 
 import akka.actor._
+import play.api.db._
+import play.api.Play.current
 import scala.collection.mutable.ArrayBuffer
 
 // our domain message protocol
@@ -23,17 +25,22 @@ class Chat extends Actor {
     case Leave =>
       context become process(subscribers - sender)
 
-    case AskCurrMessages =>
-      sender ! currMessages
-
     case msg: ClientSentMessage => {
       // send messages to all subscribers except sender
-      this.currMessages += msg.text
+      saveMessageToDB(msg.text)
       (subscribers - sender).foreach { _ ! msg }
     }
   }
 
   def getCurrMessages(): ArrayBuffer[String] = {
     currMessages
+  }
+
+  def saveMessageToDB(text: String) = {
+    DB.withConnection { conn =>
+      val ps = conn.prepareStatement("INSERT INTO messages (text) VALUES (?)")
+      ps.setString(1, text)
+      ps.executeUpdate()
+    }
   }
 }
